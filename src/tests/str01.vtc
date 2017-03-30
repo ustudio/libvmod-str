@@ -1,0 +1,44 @@
+varnishtest "Test str returns appropriate value."
+
+server s1 {
+    rxreq
+    txresp
+} -start
+
+
+varnish v1 -vcl+backend {
+    import str from "${vmod_topbuild}/src/.libs/libvmod_str.so";
+
+    sub vcl_deliver {
+        set resp.http.x-atoi = str.atoi("10") + 1;
+        set resp.http.x-atoi-invalid = str.atoi("foobar");
+        set resp.http.x-strstr = str.strstr("foobarbaz", "bar");
+        if (str.strstr("foobar", "bar")) {
+            set resp.http.x-strstr-bool = "true";
+        }
+        set resp.http.x-strstr-not-found = str.strstr("foo", "bar");
+        set resp.http.x-tolower = str.tolower("FoO");
+        set resp.http.x-toupper = str.toupper("fOo");
+        set resp.http.x-if-true = str.ifs(1 < 2, "yes", "no");
+        set resp.http.x-if-false = str.ifs(1 > 2, "yes", "no");
+        set resp.http.x-if-strstr = str.ifs(str.strstr("foobar", "bar"), "yes", "no");
+    }
+} -start
+
+
+client c1 {
+    txreq -url "/"
+    rxresp
+    expect resp.http.x-atoi == "11"
+    expect resp.http.x-atoi-invalid == "0"
+    expect resp.http.x-strstr == "barbaz"
+    expect resp.http.x-strstr-bool == "true"
+    expect resp.http.x-strstr-not-found == ""
+    expect resp.http.x-tolower == "foo"
+    expect resp.http.x-toupper == "FOO"
+    expect resp.http.x-if-true == "yes"
+    expect resp.http.x-if-false == "no"
+    expect resp.http.x-if-strstr == "yes"
+}
+
+client c1 -run

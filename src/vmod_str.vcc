@@ -1,0 +1,7 @@
+Module str
+
+Function INT atoi(STRING)
+Function STRING strstr(STRING, STRING)
+Function STRING tolower(STRING)
+Function STRING toupper(STRING)
+Function STRING ifs(BOOL, STRING, STRING)
