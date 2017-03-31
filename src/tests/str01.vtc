@@ -10,18 +10,34 @@ varnish v1 -vcl+backend {
     import str from "${vmod_topbuild}/src/.libs/libvmod_str.so";
 
     sub vcl_deliver {
+        # atoi tests
         set resp.http.x-atoi = str.atoi("10") + 1;
         set resp.http.x-atoi-invalid = str.atoi("foobar");
+        set resp.http.x-atoi-null = str.atoi(req.http.X-Not-Valid);
+
+        # strstr tests
         set resp.http.x-strstr = str.strstr("foobarbaz", "bar");
         if (str.strstr("foobar", "bar")) {
-            set resp.http.x-strstr-bool = "true";
+            set resp.http.x-strstr-bool-true = "true";
+        }
+        if (!str.strstr("foobar", "baz")) {
+            set resp.http.x-strstr-bool-false = "false";
         }
         set resp.http.x-strstr-not-found = str.strstr("foo", "bar");
+        set resp.http.x-strstr-null-haystack = str.strstr(req.http.X-Not-Valid, "bar");
+        set resp.http.x-strstr-null-needle = str.strstr("foo", req.http.X-Not-Valid);
+
+        # capitalization tests
         set resp.http.x-tolower = str.tolower("FoO");
         set resp.http.x-toupper = str.toupper("fOo");
+        set resp.http.x-tolower-null = str.tolower(req.http.X-Not-Valid);
+        set resp.http.x-toupper-null = str.toupper(req.http.X-Not-Valid);
+
+        # ifs tests
         set resp.http.x-if-true = str.ifs(1 < 2, "yes", "no");
         set resp.http.x-if-false = str.ifs(1 > 2, "yes", "no");
         set resp.http.x-if-strstr = str.ifs(str.strstr("foobar", "bar"), "yes", "no");
+        set resp.http.x-if-null = str.ifs(1 < 2, req.http.X-Not-Valid, req.http.X-Also-Not-Valid);
     }
 } -start
 
@@ -29,16 +45,31 @@ varnish v1 -vcl+backend {
 client c1 {
     txreq -url "/"
     rxresp
+
+    # atoi assertions
     expect resp.http.x-atoi == "11"
     expect resp.http.x-atoi-invalid == "0"
+    expect resp.http.x-atoi-null == "0"
+
+    # strstr assertions
     expect resp.http.x-strstr == "barbaz"
-    expect resp.http.x-strstr-bool == "true"
+    expect resp.http.x-strstr-bool-true == "true"
+    expect resp.http.x-strstr-bool-false == "false"
     expect resp.http.x-strstr-not-found == ""
+    expect resp.http.x-strstr-null-haystack == ""
+    expect resp.http.x-strstr-null-needle == ""
+
+    # capitalization assertions
     expect resp.http.x-tolower == "foo"
     expect resp.http.x-toupper == "FOO"
+    expect resp.http.x-tolower-null == ""
+    expect resp.http.x-toupper-null == ""
+
+    # ifs assertions
     expect resp.http.x-if-true == "yes"
     expect resp.http.x-if-false == "no"
     expect resp.http.x-if-strstr == "yes"
+    expect resp.http.x-if-null == ""
 }
 
 client c1 -run

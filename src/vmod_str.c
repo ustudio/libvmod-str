@@ -12,10 +12,10 @@ typedef struct sess re_ctx;
 int
 vmod_atoi(struct sess *sp, const char *int_string)
 {
-    // this is a trivial converter for unix timestamps for now, we
-    // need to turn it into a factory for all the different potential
-    // formats it could discover (RFC 1123, etc.)
     int value;
+    if (int_string == NULL) {
+        return 0;
+    }
     if (sscanf(int_string, "%i", &value) != 1) {
         return 0;
     }
@@ -46,11 +46,17 @@ vmod_strstr(struct sess *sp, const char *haystack, const char *needle)
         return NULL;
     }
 
+    if (haystack == NULL || needle == NULL) {
+        WS_Release(sp->wrk->ws, 0);
+        return NULL;
+    }
+
     result = sp->wrk->ws->f;
     match = strstr(haystack, needle);
 
     if (match == NULL) {
-        result = "";
+        WS_Release(sp->wrk->ws, 0);
+        return NULL;
     } else {
         length = strlen(match);
         if (length > available - 1) {
@@ -71,7 +77,14 @@ vmod_toupper(struct sess *sp, const char *string)
     char *result;
     unsigned index;
     unsigned available = WS_Reserve(sp->wrk->ws, 0);
-    unsigned length = strlen(string);
+    unsigned length;
+
+    if (string == NULL) {
+        WS_Release(sp->wrk->ws, 0);
+        return NULL;
+    }
+
+    length = strlen(string);
 
     if (available <= length) {
         WS_Release(sp->wrk->ws, 0);
@@ -97,7 +110,14 @@ vmod_tolower(struct sess *sp, const char *string)
     char *result;
     unsigned index;
     unsigned available = WS_Reserve(sp->wrk->ws, 0);
-    unsigned length = strlen(string);
+    unsigned length;
+
+    if (string == NULL) {
+        WS_Release(sp->wrk->ws, 0);
+        return NULL;
+    }
+
+    length = strlen(string);
 
     if (available <= length) {
         WS_Release(sp->wrk->ws, 0);
