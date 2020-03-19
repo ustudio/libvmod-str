@@ -38,6 +38,14 @@ varnish v1 -vcl+backend {
         set resp.http.x-if-false = str.ifs(1 > 2, "yes", "no");
         set resp.http.x-if-strstr = str.ifs(str.strstr("foobar", "bar"), "yes", "no");
         set resp.http.x-if-null = str.ifs(1 < 2, req.http.X-Not-Valid, req.http.X-Also-Not-Valid);
+
+        # prefixof tests
+        if (str.prefixof("startend", "start")) {
+            set resp.http.x-prefixof-bool-true = "true";
+        }
+        if (!str.prefixof("startend", "end")) {
+            set resp.http.x-prefixof-bool-false = "false";
+        }
     }
 } -start
 
@@ -70,6 +78,10 @@ client c1 {
     expect resp.http.x-if-false == "no"
     expect resp.http.x-if-strstr == "yes"
     expect resp.http.x-if-null == ""
+
+    # prefixof assertions
+    expect resp.http.x-prefixof-bool-true == "true"
+    expect resp.http.x-prefixof-bool-false == "false"
 }
 
 client c1 -run
