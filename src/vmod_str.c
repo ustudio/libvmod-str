@@ -135,3 +135,9 @@ vmod_tolower(struct sess *sp, const char *string)
     WS_Release(sp->wrk->ws, length);
     return result;
 }
+
+unsigned int
+vmod_prefixof(struct sess *sp, const char *s, const char *begins_with)
+{
+    return s == strstr(s, begins_with);
+}
