@@ -17,7 +17,7 @@ jobs:
       - restore_cache:
           key: v1-vmod-str-varnish-{{ checksum ".varnish_version" }}-{{ arch }}
       - run:
-          name: Build Varnish Cache
+          name: Build Varnish
           command: |-
             if [ -d varnishsrc ]
             then
