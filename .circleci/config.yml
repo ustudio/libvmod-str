@@ -13,8 +13,9 @@ jobs:
           command: |-
             apt-get update
             apt-get install -y --no-install-recommends devscripts equivs
+      - run: echo "$VARNISH_VERSION" > .varnish_version
       - restore_cache:
-          key: v1-vmod-str-varnish-{{ .Environment.VARNISH_VERSION }}-{{ arch }}
+          key: v1-vmod-str-varnish-{{ checksum ".varnish_version" }}-{{ arch }}
       - run:
           name: Build Varnish Cache
           command: |-
@@ -29,7 +30,7 @@ jobs:
               make
             fi
       - save_cache:
-          key: v1-vmod-str-varnish-{{ .Environment.VARNISH_VERSION }}-{{ arch }}
+          key: v1-vmod-str-varnish-{{ checksum ".varnish_version" }}-{{ arch }}
           paths:
             - varnishsrc
       - run:
