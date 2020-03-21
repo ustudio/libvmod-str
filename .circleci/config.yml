@@ -13,26 +13,14 @@ jobs:
           command: |-
             apt-get update
             apt-get install -y --no-install-recommends devscripts equivs
-      - run: echo "$VARNISH_VERSION" > .varnish_version
-      - restore_cache:
-          key: v1-vmod-str-varnish-{{ checksum ".varnish_version" }}-{{ arch }}
       - run:
           name: Build Varnish
           command: |-
-            if [ -d varnishsrc ]
-            then
-              echo "Skipping -- build was restored from cache"
-            else
-              mkdir varnishsrc
-              cd varnishsrc
-              curl -Ss https://varnish-cache.org/_downloads/varnish-${VARNISH_VERSION}.tgz | tar --strip-components=1 -zx
-              ./configure
-              make
-            fi
-      - save_cache:
-          key: v1-vmod-str-varnish-{{ checksum ".varnish_version" }}-{{ arch }}
-          paths:
-            - varnishsrc
+            mkdir varnishsrc
+            cd varnishsrc
+            curl -Ss https://varnish-cache.org/_downloads/varnish-${VARNISH_VERSION}.tgz | tar --strip-components=1 -zx
+            ./configure
+            make
       - run:
           name: Configure Module
           command: |-
