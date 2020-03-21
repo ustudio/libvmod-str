@@ -50,3 +50,9 @@ jobs:
           name: Run Tests
           command: |-
             make check
+
+workflows:
+  version: 2
+  workflow:
+    jobs:
+      - test
