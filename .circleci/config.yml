@@ -1,0 +1,47 @@
+version: 2
+jobs:
+  test:
+    environment:
+      VARNISH_VERSION: 3.0.6
+    docker:
+      - image: buildpack-deps:xenial
+    working_directory: /tmp/build
+    steps:
+      - checkout
+      - run:
+          name: Install Required Packages
+          command: |-
+            apt-get update
+            apt-get install -y --no-install-recommends devscripts equivs
+      - run:
+          name: Build Varnish
+          command: |-
+            mkdir varnishsrc
+            cd varnishsrc
+            curl -Ss https://varnish-cache.org/_downloads/varnish-${VARNISH_VERSION}.tgz | tar --strip-components=1 -zx
+            ./configure
+            make
+      - run:
+          name: Configure Module
+          command: |-
+            ./autogen.sh
+            VARNISHSRC=$PWD/varnishsrc PKG_CONFIG_PATH=$PWD/varnishsrc ./configure
+      - run:
+          name: Build Module
+          command: |-
+            make
+      - run:
+          name: Make files visible to unprivileged user
+          command: |-
+            # Running the test suite as root makes varnishd drop to user `nobody`.
+            chown -R nobody:nogroup .
+      - run:
+          name: Run Tests
+          command: |-
+            make check
+
+workflows:
+  version: 2
+  workflow:
+    jobs:
+      - test
